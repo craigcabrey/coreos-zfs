@@ -1,0 +1,21 @@
+name: Build and Push Image
+on:
+  schedule:
+    - cron: '43 5 * * 0'
+
+jobs:
+  build:
+    name: Build and push image
+    runs-on: ubuntu-20.04
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Build Image
+      id: build-image
+      uses: redhat-actions/buildah-build@v2
+      with:
+        image: coreos-zfs
+        tags: latest ${{ github.sha }}
+        containerfiles: |
+          ./Containerfile
