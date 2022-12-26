@@ -11,7 +11,7 @@ jobs:
 
     env:
       IMAGE_NAME: ${{ github.repository }}
-      REGISTRY_NAME: ghcr.io/craigcabrey
+      REGISTRY: ghcr.io
 
     steps:
     - uses: actions/checkout@v3
@@ -20,7 +20,7 @@ jobs:
       id: build-image
       uses: redhat-actions/buildah-build@v2
       with:
-        image: coreos-zfs
+        image: ${{ env.IMAGE_NAME }}
         tags: latest ${{ github.sha }}
         containerfiles: |
           ./Containerfile
