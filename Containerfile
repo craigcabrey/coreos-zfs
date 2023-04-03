@@ -28,6 +28,7 @@ RUN ./configure -with-linux=/usr/src/kernels/$(cat /kernel-version.txt)/ -with-l
 
 FROM quay.io/fedora/fedora-coreos:stable
 COPY --from=builder /zfs/*.rpm /
+RUN rpm-ostree install lm_sensors tmux
 # For the example we install all RPMS (debug, test, etc).
 # In real use cases probably just want the module rpm.
 RUN rpm-ostree install /*.$(uname -p).rpm && \
