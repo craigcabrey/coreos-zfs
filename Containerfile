@@ -1,17 +1,12 @@
-# Needs to be set to the Fedora version 
-# on CoreOS stable stream, as it is our base image.
-ARG BUILDER_VERSION=37
-
 FROM quay.io/fedora/fedora-coreos:stable as kernel-query
 #We can't use the `uname -r` as it will pick up the host kernel version
 RUN rpm -qa kernel --queryformat '%{VERSION}-%{RELEASE}.%{ARCH}' > /kernel-version.txt
 
 # Using https://openzfs.github.io/openzfs-docs/Developer%20Resources/Custom%20Packages.html
-FROM registry.fedoraproject.org/fedora:${BUILDER_VERSION} as builder
-ARG BUILDER_VERSION
+FROM quay.io/fedora/fedora:latest as builder
 COPY --from=kernel-query /kernel-version.txt /kernel-version.txt
 WORKDIR /etc/yum.repos.d
-RUN curl -L -O https://src.fedoraproject.org/rpms/fedora-repos/raw/f${BUILDER_VERSION}/f/fedora-updates-archive.repo && \
+RUN curl -L -O https://src.fedoraproject.org/rpms/fedora-repos/raw/f$(rpm -E %fedora)/f/fedora-updates-archive.repo && \
     sed -i 's/enabled=AUTO_VALUE/enabled=true/' fedora-updates-archive.repo
 RUN dnf install -y jq dkms gcc make autoconf automake libtool rpm-build libtirpc-devel libblkid-devel \
     libuuid-devel libudev-devel openssl-devel zlib-devel libaio-devel libattr-devel elfutils-libelf-devel \
@@ -28,10 +23,11 @@ RUN ./configure -with-linux=/usr/src/kernels/$(cat /kernel-version.txt)/ -with-l
 
 FROM quay.io/fedora/fedora-coreos:stable
 COPY --from=builder /zfs/*.rpm /
+RUN rm -f /*.src.rpm
 RUN rpm-ostree install lm_sensors tmux
 # For the example we install all RPMS (debug, test, etc).
 # In real use cases probably just want the module rpm.
-RUN rpm-ostree install /*.$(uname -p).rpm && \
+RUN rpm-ostree install /*.rpm && \
     # we don't want any files on /var
     rm -rf /var/lib/pcp && \
     ostree container commit 
