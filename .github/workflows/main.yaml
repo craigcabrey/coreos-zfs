@@ -34,6 +34,7 @@ jobs:
             ./Containerfile
 
       - name: Log in to the GitHub Container registry
+        if: github.event_name != 'pull_request'
         id: login-to-ghcr
         uses: redhat-actions/podman-login@v1
         with:
@@ -42,11 +43,23 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push to GitHub Container Repository
+        if: github.event_name != 'pull_request'
         id: push-to-ghcr
         uses: redhat-actions/push-to-registry@v2
         with:
           image: ${{ steps.build-image.outputs.image }}
           tags: ${{ steps.build-image.outputs.tags }}
           registry: ${{ env.REGISTRY }}
+
+      - uses: sigstore/cosign-installer@main
+        if: github.event_name != 'pull_request'
+
+      - name: Sign container image
+        if: github.event_name != 'pull_request'
+        run: |
+          echo "${{ secrets.COSIGN_KEY }}" > cosign.key
+          cosign sign --yes --key cosign.key ghcr.io/craigcabrey/coreos-zfs:latest
+        env:
+          COSIGN_PASSWORD: ""
 
       - uses: gautamkrishnar/keepalive-workflow@v1
