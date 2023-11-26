@@ -15,10 +15,10 @@ RUN dnf install -y jq dkms gcc make autoconf automake libtool rpm-build libtirpc
     kernel-$(cat /kernel-version.txt) kernel-modules-$(cat /kernel-version.txt) kernel-devel-$(cat /kernel-version.txt) \
     python3 python3-devel python3-setuptools python3-cffi libffi-devel git ncompress libcurl-devel
 WORKDIR /
-# Uses project_id from: https://release-monitoring.org/project/11706/
-RUN curl "https://release-monitoring.org/api/v2/versions/?project_id=11706" | jq --raw-output '.stable_versions[0]' >> /zfs_version.txt
-RUN curl -L -O https://github.com/openzfs/zfs/releases/download/zfs-$(cat /zfs_version.txt)/zfs-$(cat /zfs_version.txt).tar.gz && \
-    tar xzf zfs-$(cat /zfs_version.txt).tar.gz && mv zfs-$(cat /zfs_version.txt) zfs
+
+RUN curl -H "Accept: application/vnd.github+json" https://api.github.com/repos/openzfs/zfs/releases/latest | jq -r .tag_name > /zfs.txt
+RUN curl -o zfs.tar.gz -L https://github.com/openzfs/zfs/releases/download/$(cat /zfs.txt)/$(cat /zfs.txt).tar.gz && \
+    tar xzf zfs.tar.gz && mv $(cat /zfs.txt) zfs
 WORKDIR /zfs
 RUN ./configure -with-linux=/usr/src/kernels/$(cat /kernel-version.txt)/ -with-linux-obj=/usr/src/kernels/$(cat /kernel-version.txt)/ \
     && make -j1 rpm-utils rpm-kmod
