@@ -62,4 +62,4 @@ jobs:
         env:
           COSIGN_PASSWORD: ""
 
-      - uses: gautamkrishnar/keepalive-workflow@v1
+      - uses: gautamkrishnar/keepalive-workflow@v2
